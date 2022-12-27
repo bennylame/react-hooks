@@ -5,30 +5,10 @@ import React from 'react'
 import {useState, useEffect} from 'react'
 import {useLocalStorageState} from '../utils'
 
-function Board() {
-  const [squares, setSquares] = useLocalStorageState(
-    () => 'saved-game',
-    Array(9).fill(null),
-  )
-
-  let nextValue = calculateNextValue(squares)
-  let winner = calculateWinner(squares)
-  let status = calculateStatus(winner, squares, nextValue)
-
-  function selectSquare(square) {
-    if (winner || squares[square]) return
-    let copySquares = [...squares]
-    copySquares[square] = nextValue
-    setSquares(copySquares)
-  }
-
-  function restart() {
-    setSquares(Array(9).fill(null))
-  }
-
+function Board({squares, onClick}) {
   function renderSquare(i) {
     return (
-      <button className="square" onClick={() => selectSquare(i)}>
+      <button className="square" onClick={() => onClick(i)}>
         {squares[i]}
       </button>
     )
@@ -36,7 +16,6 @@ function Board() {
 
   return (
     <div>
-      <div className="status">{status}</div>
       <div className="board-row">
         {renderSquare(0)}
         {renderSquare(1)}
@@ -52,18 +31,86 @@ function Board() {
         {renderSquare(7)}
         {renderSquare(8)}
       </div>
-      <button className="restart" onClick={restart}>
-        restart
-      </button>
     </div>
   )
 }
 
 function Game() {
+  const [squares, setSquares] = useLocalStorageState(
+    'squares',
+    Array(9).fill(null),
+  )
+
+  const [history, setHistory] = useLocalStorageState(
+    'history',
+    Array(1).fill(Array(9).fill(null)),
+  )
+
+  const [step, setStep] = useLocalStorageState('step', 0)
+
+  let nextValue = calculateNextValue(squares)
+  let winner = calculateWinner(squares)
+  let status = calculateStatus(winner, squares, nextValue)
+
+  function selectSquare(square) {
+    if (winner || squares[square]) return
+    let copySquares = [...squares]
+    copySquares[square] = nextValue
+    setSquares(copySquares)
+
+    const historyCopy = [...history]
+    historyCopy.push(squares)
+    setHistory(historyCopy)
+
+    setStep(step + 1)
+  }
+
+  function selectStep(i) {
+    setSquares(history[i])
+    setStep(i)
+  }
+
+  const moves = history.map((x, i) => {
+    const label =
+      i === step && i !== 0 ? `Go to move #${i} (current)` : `Go to move #${i}`
+
+    switch (i) {
+      case 0:
+        return (
+          <li>
+            <button disabled={step === i} onClick={() => selectStep(i)}>
+              {step === 0 ? `Go to game start (current)` : `Go to game start`}
+            </button>
+          </li>
+        )
+      default:
+        return (
+          <li>
+            <button disabled={step === i} onClick={() => selectStep(i)}>
+              {label}
+            </button>
+          </li>
+        )
+    }
+  })
+
+  function restart() {
+    setSquares(Array(9).fill(null))
+    setHistory(Array(1).fill(Array(9).fill(null)))
+    setStep(0)
+  }
+
   return (
     <div className="game">
       <div className="game-board">
-        <Board />
+        <Board squares={squares} onClick={selectSquare} />
+        <button className="restart" onClick={restart}>
+          restart
+        </button>
+      </div>
+      <div className="history">
+        <div className="status">{status}</div>
+        <ol>{moves}</ol>
       </div>
     </div>
   )
