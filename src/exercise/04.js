@@ -54,6 +54,7 @@ function Game() {
 
   function selectSquare(square) {
     if (winner || squares[square]) return
+
     let copySquares = [...squares]
     copySquares[square] = nextValue
     setSquares(copySquares)
@@ -71,27 +72,16 @@ function Game() {
   }
 
   const moves = history.map((x, i) => {
-    const label =
-      i === step && i !== 0 ? `Go to move #${i} (current)` : `Go to move #${i}`
+    const description = i === step ? 'Go to game start' : `Go to move #${i}`
+    const isCurrentStep = i === step
 
-    switch (i) {
-      case 0:
-        return (
-          <li>
-            <button disabled={step === i} onClick={() => selectStep(i)}>
-              {step === 0 ? `Go to game start (current)` : `Go to game start`}
-            </button>
-          </li>
-        )
-      default:
-        return (
-          <li>
-            <button disabled={step === i} onClick={() => selectStep(i)}>
-              {label}
-            </button>
-          </li>
-        )
-    }
+    return (
+      <li key={i}>
+        <button disabled={isCurrentStep} onClick={() => selectStep(i)}>
+          {description} {isCurrentStep ? '(current)' : null}
+        </button>
+      </li>
+    )
   })
 
   function restart() {
