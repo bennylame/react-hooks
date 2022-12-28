@@ -11,8 +11,21 @@ import {
   PokemonForm,
   PokemonDataView,
   PokemonInfoFallback,
-  PokemonErrorBoundary,
 } from '../pokemon'
+
+class ErrorBoundary extends React.Component {
+  state = {error: null}
+
+  static getDerivedStateFromError(error) {
+    return {error}
+  }
+
+  render() {
+    const {error} = this.state
+    if (error) return <this.props.FallbackComponent error={error} />
+    return this.props.children
+  }
+}
 
 function PokemonInfo({pokemonName}) {
   // 🐨 Have state for the pokemon (null)
@@ -34,14 +47,17 @@ function PokemonInfo({pokemonName}) {
   //   )
   React.useEffect(() => {
     if (!pokemonName) return
-    setState({...state, status: 'pending'})
+    setState({status: 'pending'})
+    console.log('useEffect 1', state)
 
     fetchPokemon(pokemonName)
       .then(result => {
-        setState({...state, status: 'resolved', pokemon: result})
+        setState({status: 'resolved', pokemon: result})
+        console.log('useEffect 2', state)
       })
       .catch(error => {
-        setState({...state, status: 'rejected', error: error})
+        setState({status: 'rejected', error: error})
+        console.log('useEffect 3', state)
       })
   }, [pokemonName])
 
@@ -53,19 +69,24 @@ function PokemonInfo({pokemonName}) {
   const isLoading = state.status === 'pending'
   const isResolved = state.status === 'resolved'
   const isRejected = state.status === 'rejected'
+  console.log('before render', state)
 
   if (isIdle) return 'Submit a pokemon'
 
-  if (isRejected)
-    return (
-      <div role="alert">
-        There was an error:{' '}
-        <pre style={{whiteSpace: 'normal'}}>{state.error.message}</pre>
-      </div>
-    )
+  if (isRejected) throw state.error
+
   if (isResolved) return <PokemonDataView pokemon={state.pokemon} />
 
   if (isLoading) return <PokemonInfoFallback name={pokemonName} />
+}
+
+function ErrorFallback({error}) {
+  return (
+    <div role="alert">
+      There was an error:{' '}
+      <pre style={{whiteSpace: 'normal'}}>{error.message}</pre>
+    </div>
+  )
 }
 
 function App() {
@@ -80,7 +101,9 @@ function App() {
       <PokemonForm pokemonName={pokemonName} onSubmit={handleSubmit} />
       <hr />
       <div className="pokemon-info">
-        <PokemonInfo pokemonName={pokemonName} />
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <PokemonInfo pokemonName={pokemonName} />
+        </ErrorBoundary>
       </div>
     </div>
   )
