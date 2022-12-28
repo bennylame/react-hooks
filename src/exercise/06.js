@@ -20,6 +20,7 @@ function PokemonInfo({pokemonName}) {
   // pokemon name changes.
 
   const [pokemon, setPokemon] = React.useState(null)
+  const [error, setError] = React.useState(null)
 
   // 💰 DON'T FORGET THE DEPENDENCIES ARRAY!
   // 💰 if the pokemonName is falsy (an empty string) then don't bother making the request (exit early).
@@ -34,9 +35,11 @@ function PokemonInfo({pokemonName}) {
     fetchPokemon(pokemonName)
       .then(result => {
         setPokemon(result)
+        setError(null)
       })
       .catch(error => {
         setPokemon(null)
+        setError(error)
       })
   }, [pokemonName])
 
@@ -45,6 +48,13 @@ function PokemonInfo({pokemonName}) {
   //   2. pokemonName but no pokemon: <PokemonInfoFallback name={pokemonName} />
   //   3. pokemon: <PokemonDataView pokemon={pokemon} />
   if (!pokemonName) return 'Submit a pokemon'
+  if (error)
+    return (
+      <div role="alert">
+        There was an error:{' '}
+        <pre style={{whiteSpace: 'normal'}}>{error.message}</pre>
+      </div>
+    )
   return pokemon ? (
     <PokemonDataView pokemon={pokemon} />
   ) : (
