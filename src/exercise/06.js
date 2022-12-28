@@ -22,7 +22,10 @@ class ErrorBoundary extends React.Component {
 
   render() {
     const {error} = this.state
-    if (error) return <this.props.FallbackComponent error={error} />
+    if (error) {
+      return <this.props.FallbackComponent error={error} />
+    }
+    console.log('BAAAJS', this.state.error)
     return this.props.children
   }
 }
@@ -48,16 +51,13 @@ function PokemonInfo({pokemonName}) {
   React.useEffect(() => {
     if (!pokemonName) return
     setState({status: 'pending'})
-    console.log('useEffect 1', state)
 
     fetchPokemon(pokemonName)
       .then(result => {
         setState({status: 'resolved', pokemon: result})
-        console.log('useEffect 2', state)
       })
       .catch(error => {
         setState({status: 'rejected', error: error})
-        console.log('useEffect 3', state)
       })
   }, [pokemonName])
 
@@ -69,7 +69,6 @@ function PokemonInfo({pokemonName}) {
   const isLoading = state.status === 'pending'
   const isResolved = state.status === 'resolved'
   const isRejected = state.status === 'rejected'
-  console.log('before render', state)
 
   if (isIdle) return 'Submit a pokemon'
 
@@ -101,7 +100,7 @@ function App() {
       <PokemonForm pokemonName={pokemonName} onSubmit={handleSubmit} />
       <hr />
       <div className="pokemon-info">
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ErrorBoundary FallbackComponent={ErrorFallback} key={pokemonName}>
           <PokemonInfo pokemonName={pokemonName} />
         </ErrorBoundary>
       </div>
