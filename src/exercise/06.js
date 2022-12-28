@@ -19,9 +19,11 @@ function PokemonInfo({pokemonName}) {
   // 🐨 use React.useEffect where the callback should be called whenever the
   // pokemon name changes.
 
-  const [pokemon, setPokemon] = React.useState(null)
-  const [error, setError] = React.useState(null)
-  const [status, setStatus] = React.useState('idle')
+  const [state, setState] = React.useState({
+    status: 'idle',
+    pokemon: null,
+    error: null,
+  })
 
   // 💰 DON'T FORGET THE DEPENDENCIES ARRAY!
   // 💰 if the pokemonName is falsy (an empty string) then don't bother making the request (exit early).
@@ -32,15 +34,14 @@ function PokemonInfo({pokemonName}) {
   //   )
   React.useEffect(() => {
     if (!pokemonName) return
-    setStatus('pending')
+    setState({...state, status: 'pending'})
+
     fetchPokemon(pokemonName)
       .then(result => {
-        setPokemon(result)
-        setStatus('resolved')
+        setState({...state, status: 'resolved', pokemon: result})
       })
       .catch(error => {
-        setError(error)
-        setStatus('rejected')
+        setState({...state, status: 'rejected', error: error})
       })
   }, [pokemonName])
 
@@ -48,10 +49,10 @@ function PokemonInfo({pokemonName}) {
   //   1. no pokemonName: 'Submit a pokemon'
   //   2. pokemonName but no pokemon: <PokemonInfoFallback name={pokemonName} />
   //   3. pokemon: <PokemonDataView pokemon={pokemon} />
-  const isIdle = status === 'idle'
-  const isLoading = status === 'pending'
-  const isResolved = status === 'resolved'
-  const isRejected = status === 'rejected'
+  const isIdle = state.status === 'idle'
+  const isLoading = state.status === 'pending'
+  const isResolved = state.status === 'resolved'
+  const isRejected = state.status === 'rejected'
 
   if (isIdle) return 'Submit a pokemon'
 
@@ -59,10 +60,10 @@ function PokemonInfo({pokemonName}) {
     return (
       <div role="alert">
         There was an error:{' '}
-        <pre style={{whiteSpace: 'normal'}}>{error.message}</pre>
+        <pre style={{whiteSpace: 'normal'}}>{state.error.message}</pre>
       </div>
     )
-  if (isResolved) return <PokemonDataView pokemon={pokemon} />
+  if (isResolved) return <PokemonDataView pokemon={state.pokemon} />
 
   if (isLoading) return <PokemonInfoFallback name={pokemonName} />
 }
